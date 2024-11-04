@@ -96,7 +96,7 @@ class WebSocketHandler:
                     message_dict = json.loads(message)
                     assert isinstance(message_dict, dict)
                     logger.debug(f"Десериализованное сообщение: {message_dict}")
-
+                    message_dict = ImmutableDataChain.from_dict(message_dict)
                     # Помещаем сообщение во входную очередь
                     self.queue_in.put(message_dict)
                 except Exception as e:
