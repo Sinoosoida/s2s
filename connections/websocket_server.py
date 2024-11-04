@@ -2,7 +2,7 @@ import threading
 import asyncio
 import websockets
 import logging
-from utils.constants import end_of_data  # Импортируем специальное значение
+from utils.constants import end_of_data, end_of_data_bytes  # Импортируем специальное значение
 from utils.data import ImmutableDataChain
 import json
 import traceback
@@ -126,7 +126,7 @@ class WebSocketHandler:
 
                 if output_item.get_data()==end_of_data:
                     logger.debug(f"Получен последний элемент")
-                    buffer.append(end_of_data)
+                    buffer.append(end_of_data_bytes)
                 else:
                     assert isinstance(output_item, ImmutableDataChain)
                     llm_sentence = output_item.get("llm_sentence")
