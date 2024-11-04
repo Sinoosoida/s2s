@@ -2,21 +2,15 @@ import threading
 import asyncio
 import websockets
 import logging
-from utils.constants import end_of_data  # Импортируем специальное значение
-from utils.data import ImmutableDataChain
 import json
-import traceback
+
 logger = logging.getLogger(__name__)
 
-import threading
-import asyncio
-import websockets
-import logging
-import json
+end_of_data = "END_OF_DATA"  # Определяем специальное значение
 
 class WebSocketHandler:
     def __init__(self, stop_event, queue_in, queue_out, host='0.0.0.0', port=8765):
-        self.stop_event = stop_event
+        self.stop_event = stop_event  # threading.Event()
         self.queue_in = queue_in
         self.queue_out = queue_out
         self.host = host
@@ -31,26 +25,42 @@ class WebSocketHandler:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
+        # Создаем asyncio.Event для остановки сервера
+        self.async_stop_event = asyncio.Event()
+
         # Запускаем вебсокет-сервер
         start_server = websockets.serve(self.handler, self.host, self.port)
         self.server = self.loop.run_until_complete(start_server)
         logger.info(f"WebSocket сервер запущен на ws://{self.host}:{self.port}")
 
         # Запускаем задачу для отправки данных из выходной очереди клиенту
-        send_task = self.loop.create_task(self.send_output_to_client())
+        send_task = asyncio.ensure_future(self.send_output_to_client(), loop=self.loop)
+
+        # Запускаем задачу для мониторинга stop_event
+        stop_task = asyncio.ensure_future(self.check_stop_event(), loop=self.loop)
 
         try:
-            # Запускаем event loop до тех пор, пока не будет установлен stop_event
-            self.loop.run_until_complete(self.stop_event.wait())
+            # Запускаем event loop
+            self.loop.run_forever()
         finally:
             # Останавливаем сервер и закрываем соединение
             send_task.cancel()
+            stop_task.cancel()
             self.server.close()
             self.loop.run_until_complete(self.server.wait_closed())
             if self.websocket is not None:
                 self.loop.run_until_complete(self.websocket.close())
             self.loop.close()
             logger.info("WebSocket сервер остановлен")
+
+    async def check_stop_event(self):
+        # Ожидаем в отдельном потоке, когда threading.Event будет установлен
+        while not self.stop_event.is_set():
+            await asyncio.sleep(0.1)
+        # Устанавливаем asyncio.Event для остановки event loop
+        self.async_stop_event.set()
+        # Останавливаем event loop
+        self.loop.stop()
 
     async def handler(self, websocket, path):
         # Сохраняем websocket клиента
@@ -60,7 +70,7 @@ class WebSocketHandler:
         self.client_connected_event.set()
 
         try:
-            while not self.stop_event.is_set():
+            while not self.async_stop_event.is_set():
                 # Ожидаем сообщения от клиента
                 message = await websocket.recv()
                 logger.debug(f"Получено сообщение от клиента {websocket.remote_address}: {message}")
@@ -71,7 +81,7 @@ class WebSocketHandler:
                     assert isinstance(message_dict, dict)
                     logger.debug(f"Десериализованное сообщение: {message_dict}")
 
-                    # Вместо использования ImmutableDataChain просто помещаем dict в очередь
+                    # Помещаем сообщение во входную очередь
                     self.queue_in.put(message_dict)
                 except Exception as e:
                     logger.error(f"Ошибка при обработке сообщения: {e}")
@@ -95,7 +105,7 @@ class WebSocketHandler:
 
     async def send_output_to_client(self):
         buffer = []  # Буфер для хранения сообщений, когда клиент не подключен
-        while not self.stop_event.is_set():
+        while not self.async_stop_event.is_set():
             try:
                 # Получаем данные из выходной очереди (теперь просто dict)
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
