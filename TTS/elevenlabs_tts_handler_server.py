@@ -73,7 +73,7 @@ class ElevenLabsTTSServerHandler(BaseHandler):
                     buffer += chunk
                     even_chunk = buffer[:(len(buffer) // 2) * 2]
                     audio_chunk = np.frombuffer(even_chunk, dtype='<i2')
-                    yield input_data.add_data(audio_chunk, "llm_sentence")
+                    yield input_data.add_data(audio_chunk, "output_audio_chunk")
                     buffer = buffer[(len(buffer) // 2) * 2:]
 
             logger.debug(f"All chunks received")
