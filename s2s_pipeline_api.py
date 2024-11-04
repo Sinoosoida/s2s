@@ -39,7 +39,7 @@ from transformers import (
 from utils.thread_manager import ThreadManager
 from utils.deiterator import DeiteratorHandler
 from INTERRUPTION.interruption_manager_handler import InterruptionManagerHandler
-from llm_tts_api import LLMTTSAPI
+from llm_tts_api.server_llm_tts import LLMTTSAPI
 # Ensure that the necessary NLTK resources are available
 try:
     nltk.data.find("tokenizers/punkt_tab")
