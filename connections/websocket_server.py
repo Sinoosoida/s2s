@@ -1,26 +1,12 @@
-import threading
-import asyncio
-import websockets
 import logging
-from utils.constants import end_of_data, end_of_data_bytes  # Импортируем специальное значение
-from utils.data import ImmutableDataChain
-import json
-import traceback
 logger = logging.getLogger(__name__)
 
-import threading
+from utils.constants import end_of_data, end_of_data_bytes  # Импортируем специальное значение
+from utils.data import ImmutableDataChain
+import traceback
 import asyncio
 import websockets
-import logging
 import json
-
-import threading
-import asyncio
-import websockets
-import logging
-import json
-
-logger = logging.getLogger(__name__) # Определяем специальное значение
 
 class WebSocketHandler:
     def __init__(self, stop_event, queue_in, queue_out, host='0.0.0.0', port=8765):
@@ -38,9 +24,6 @@ class WebSocketHandler:
         # Создаем новый event loop для этого потока
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-
-        # Создаем asyncio.Event для остановки сервера
-        self.async_stop_event = asyncio.Event()
 
         # Запускаем вебсокет-сервер
         start_server = websockets.serve(self.handler, self.host, self.port)
@@ -68,11 +51,8 @@ class WebSocketHandler:
             logger.info("WebSocket сервер остановлен")
 
     async def check_stop_event(self):
-        # Ожидаем в отдельном потоке, когда threading.Event будет установлен
-        while not self.stop_event.is_set():
-            await asyncio.sleep(0.1)
-        # Устанавливаем asyncio.Event для остановки event loop
-        self.async_stop_event.set()
+        # Ожидаем, пока threading.Event будет установлен, используя run_in_executor
+        await self.loop.run_in_executor(None, self.stop_event.wait)
         # Останавливаем event loop
         self.loop.stop()
 
@@ -84,7 +64,7 @@ class WebSocketHandler:
         self.client_connected_event.set()
 
         try:
-            while not self.async_stop_event.is_set():
+            while not self.stop_event.is_set():
                 # Ожидаем сообщения от клиента
                 message = await websocket.recv()
                 logger.debug(f"Получено сообщение от клиента {websocket.remote_address}: {message}")
@@ -119,23 +99,22 @@ class WebSocketHandler:
 
     async def send_output_to_client(self):
         buffer = []  # Буфер для хранения сообщений, когда клиент не подключен
-        while not self.async_stop_event.is_set():
+        while not self.stop_event.is_set():
             try:
-                # Получаем данные из выходной очереди (теперь просто dict)
+                # Получаем данные из выходной очереди
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
                 sent = output_item.get("llm_sentence")
                 logger.debug(f"sent {sent}")
-                if output_item.get("llm_sentence")==end_of_data:
+                if sent == end_of_data:
                     logger.debug(f"Получен последний элемент")
-                    buffer.append(end_of_data_bytes)
+                    buffer.append(end_of_data_bytes.decode('utf-8'))  # Декодируем байты в строку
                 else:
                     assert isinstance(output_item, ImmutableDataChain)
                     llm_sentence = output_item.get("llm_sentence")
                     output_audio_chunk = output_item.get("output_audio_chunk").tolist()
                     logger.debug(f"Получен элемент из выходной очереди: {llm_sentence}")
-                    logger.debug(f"Получено аудио: {output_audio_chunk}")
-                    output_item = json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk":output_audio_chunk})
-                    output_data = json.dumps(output_item)
+                    # Формируем JSON для отправки клиенту
+                    output_data = json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk": output_audio_chunk})
                     buffer.append(output_data)
 
                 # Пытаемся отправить сообщения, если клиент подключен
