@@ -15,3 +15,4 @@ num2words
 transliterate
 transformers
 elevenlabs
+websocket
