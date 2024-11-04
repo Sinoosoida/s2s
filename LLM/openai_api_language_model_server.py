@@ -64,29 +64,24 @@ class OpenApiModelServerHandler(BaseHandler):
 
         first_chunk = True
         first_sentence = True
-        if self.stream:
-            generated_text, printable_text = "", ""
-            for chunk in response:
-                if first_chunk:
-                    logger.debug(f"First chunk received")
-                    first_chunk = False
-                new_text = chunk.choices[0].delta.content or ""
-                generated_text += new_text
-                printable_text += new_text
-                sentences = sent_tokenize(printable_text)
-                if len(sentences) > 1:
-                    if first_sentence:
-                        logger.debug(f"First sentence received")
-                        first_sentence = False
-                    yield data.add_data(sentences[0], "llm_sentence")
-                    printable_text = new_text
+        generated_text, printable_text = "", ""
+        for chunk in response:
+            if first_chunk:
+                logger.debug(f"First chunk received")
+                first_chunk = False
+            new_text = chunk.choices[0].delta.content or ""
+            generated_text += new_text
+            printable_text += new_text
+            sentences = sent_tokenize(printable_text)
+            if len(sentences) > 1:
+                if first_sentence:
+                    logger.debug(f"First sentence received")
+                    first_sentence = False
+                yield data.add_data(sentences[0], "llm_sentence")
+                printable_text = new_text
 
-            logger.debug(f"All chunks received")
-            self.chat.append({"role": "assistant", "content": generated_text})
-            # don't forget last sentence
-            yield data.add_data(printable_text, "llm_sentence")
-            yield data.add_data(end_of_data, "llm_sentence")
-        else:
-            generated_text = response.choices[0].message.content
-            self.chat.append({"role": "assistant", "content": generated_text})
-            yield data.add_data(generated_text, "llm_sentence")
+        logger.debug(f"All chunks received")
+        self.chat.append({"role": "assistant", "content": generated_text})
+        # don't forget last sentence
+        yield data.add_data(printable_text, "llm_sentence")
+        yield data.add_data(end_of_data, "llm_sentence")
