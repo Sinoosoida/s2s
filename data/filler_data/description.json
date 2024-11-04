@@ -1,0 +1,52 @@
+[
+    {
+      "id": 0,
+      "filename": "output_audio_0.wav",
+      "text": "Я вас поняла."
+    },
+    {
+      "id": 1,
+      "filename": "output_audio_1.wav",
+      "text": "Я вас прекрасно поняла."
+    },
+    {
+      "id": 2,
+      "filename": "output_audio_2.wav",
+      "text": "Хорошо."
+    },
+    {
+      "id": 3,
+      "filename": "output_audio_3.wav",
+      "text": "В вашем случае,"
+    },
+    {
+      "id": 4,
+      "filename": "output_audio_4.wav",
+      "text": "Понятно."
+    },
+    {
+      "id": 5,
+      "filename": "output_audio_5.wav",
+      "text": "Конечно."
+    },
+    {
+      "id": 6,
+      "filename": "output_audio_6.wav",
+      "text": "Разумеется."
+    },
+      {
+      "id": 7,
+      "filename": "output_audio_7.wav",
+      "text": "Ясно."
+    },
+    {
+      "id": 8,
+      "filename": "output_audio_8.wav",
+      "text": "Понял вас."
+    },
+    {
+      "id": 9,
+      "filename": "output_audio_9.wav",
+      "text": "Согласна."
+    }
+]
