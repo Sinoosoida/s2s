@@ -81,7 +81,6 @@ class OpenApiModelServerHandler(BaseHandler):
                 printable_text = new_text
 
         logger.debug(f"All chunks received")
-        self.chat.append({"role": "assistant", "content": generated_text})
         # don't forget last sentence
         yield data.add_data(printable_text, "llm_sentence")
         yield data.add_data(end_of_data, "llm_sentence")
