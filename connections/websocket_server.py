@@ -4,7 +4,7 @@ import websockets
 import logging
 from utils.constants import end_of_data  # Импортируем специальное значение
 from utils.data import ImmutableDataChain
-
+import json
 logger = logging.getLogger(__name__)
 
 class WebSocketHandler:
