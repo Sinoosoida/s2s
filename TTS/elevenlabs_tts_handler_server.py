@@ -39,7 +39,7 @@ class ElevenLabsTTSServerHandler(BaseHandler):
 
     def process(self, input_data: ImmutableDataChain):
 
-        logger.debug(f"Prev mess {input_data.get_data()}")
+        # logger.debug(f"Prev mess {input_data.get_data()}")
         if input_data.get_data() == end_of_data:
             yield input_data
             return
