@@ -27,11 +27,9 @@ class OpenApiModelServerHandler(BaseHandler):
             raise ValueError("OpenAI API key must be provided or set in the OPENAI_API_KEY environment variable.")
 
 
-        if False:
-            self.http_client = httpx.Client(proxies=proxy_url)
-        else:
-            raise ConnectionError("No proxy")
-            self.http_client = httpx.Client()
+
+        # self.http_client = httpx.Client(proxies=proxy_url)
+        self.http_client = httpx.Client()
 
         self.client = OpenAI(api_key=api_key, http_client=self.http_client)
         self.warmup()
