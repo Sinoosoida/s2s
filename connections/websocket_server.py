@@ -109,13 +109,13 @@ class WebSocketHandler:
                 sent = output_item.get("llm_sentence")
                 logger.debug(f"sent {sent}")
                 if output_item.get("llm_sentence") == end_of_data:
-                    logger.debug(f"Получен последний элемент")
+                    logger.debug(f"End of user's request processing")
                     buffer.append(end_of_data_bytes)
                 else:
                     assert isinstance(output_item, ImmutableDataChain)
                     llm_sentence = output_item.get("llm_sentence")
                     output_audio_chunk = output_item.get("output_audio_chunk").tolist()
-                    logger.debug(f"Получен элемент из выходной очереди: {llm_sentence}")
+                    # logger.debug(f"Получен элемент из выходной очереди: {llm_sentence}")
                     # logger.debug(f"Получено аудио: {output_audio_chunk}")
                     output_item = json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk": output_audio_chunk})
                     output_data = json.dumps(output_item)
@@ -127,7 +127,7 @@ class WebSocketHandler:
                         msg = buffer.pop(0)
                         try:
                             await self.websocket.send(msg)
-                            logger.debug(f"Отправлено сообщение клиенту: {msg}")
+                            # logger.debug(f"Отправлено сообщение клиенту: {msg}")
                         except websockets.exceptions.ConnectionClosed:
                             logger.warning("Соединение с клиентом потеряно при отправке сообщения")
                             self.websocket = None
