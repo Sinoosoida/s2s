@@ -104,7 +104,7 @@ class LLMTTSAPI(BaseHandler):
 
         while True:
             response = self.ws.recv()
-            logger.info(f"Получено сообщение от сервера: {response}")
+            # logger.info(f"Получено сообщение от сервера: {response}")
 
             # Проверяем, является ли сообщение сигналом окончания обработки
             if response == end_of_data_bytes:
