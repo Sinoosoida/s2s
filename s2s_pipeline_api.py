@@ -5,7 +5,7 @@ from copy import copy
 from pathlib import Path
 from queue import Queue
 
-from modelscope.models.nlp.mglm.mglm_for_text_summarization import setup_args
+# from modelscope.models.nlp.mglm.mglm_for_text_summarization import setup_args
 
 from utils.data import FilteredQueue
 from threading import Event
