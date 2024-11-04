@@ -131,8 +131,9 @@ class WebSocketHandler:
                 else:
                     assert isinstance(output_item, ImmutableDataChain)
                     llm_sentence = output_item.get("llm_sentence")
-                    output_audio_chunk = output_item.get("output_audio_chunk")
+                    output_audio_chunk = output_item.get("output_audio_chunk").tolist()
                     logger.debug(f"Получен элемент из выходной очереди: {llm_sentence}")
+                    logger.debug(f"Получено аудио: {output_audio_chunk}")
                     json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk":output_audio_chunk})
                     output_data = json.dumps(output_item)
                     buffer.append(output_data)
