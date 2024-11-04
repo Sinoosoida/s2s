@@ -58,10 +58,15 @@ class WebSocketHandler:
                 message = await websocket.recv()
                 logger.debug(f"Получено сообщение от клиента {websocket.remote_address}: {message}")
 
+                # Десериализация сообщения из JSON в dict
+                message_dict = json.loads(message)
+                assert isinstance(message_dict, dict)
+
+                # Преобразуем dict в ImmutableDataChain
+                message_chain = ImmutableDataChain.from_dict(message_dict)
+
                 # Помещаем сообщение во входную очередь
-                assert isinstance(message, dict)
-                message = ImmutableDataChain.from_dict(message)
-                self.queue_in.put(message)
+                self.queue_in.put(message_chain)
 
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Клиент отключился: {websocket.remote_address}")
