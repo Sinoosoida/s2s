@@ -7,7 +7,7 @@ from rich.console import Console
 from openai import OpenAI
 
 from baseHandler import BaseHandler
-from LLM.chat import Chat
+from utils.constants import end_of_data
 import os
 from utils.data import ImmutableDataChain
 logger = logging.getLogger(__name__)
@@ -87,6 +87,7 @@ class OpenApiModelServerHandler(BaseHandler):
             self.chat.append({"role": "assistant", "content": generated_text})
             # don't forget last sentence
             yield data.add_data(printable_text, "llm_sentence")
+            yield data.add_data(end_of_data, "llm_sentence")
         else:
             generated_text = response.choices[0].message.content
             self.chat.append({"role": "assistant", "content": generated_text})

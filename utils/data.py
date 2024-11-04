@@ -77,6 +77,16 @@ class ImmutableDataChain:
             else:
                 return None
 
+    @classmethod
+    def from_dict(cls, data_dict):
+        """
+        Создает ImmutableDataChain из словаря data_dict, добавляя значения с помощью add_data.
+        """
+        chain = cls()
+        for key, value in data_dict.items():
+            chain = chain.add_data(value, key=key)
+        return chain
+
 
 example_data = {
     "user_audio":None,
