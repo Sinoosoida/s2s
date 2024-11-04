@@ -39,7 +39,7 @@ class ElevenLabsTTSServerHandler(BaseHandler):
 
     def process(self, input_data: ImmutableDataChain):
 
-        if input_data == end_of_data or input_data.get_data() == end_of_data:
+        if input_data.get_data() == end_of_data:
             yield input_data
             return
 
