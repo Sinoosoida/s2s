@@ -5,7 +5,14 @@ import logging
 from utils.constants import end_of_data  # Импортируем специальное значение
 from utils.data import ImmutableDataChain
 import json
+import traceback
 logger = logging.getLogger(__name__)
+
+import threading
+import asyncio
+import websockets
+import logging
+import json
 
 class WebSocketHandler:
     def __init__(self, stop_event, queue_in, queue_out, host='0.0.0.0', port=8765):
@@ -58,18 +65,27 @@ class WebSocketHandler:
                 message = await websocket.recv()
                 logger.debug(f"Получено сообщение от клиента {websocket.remote_address}: {message}")
 
-                # Десериализация сообщения из JSON в dict
-                message_dict = json.loads(message)
-                assert isinstance(message_dict, dict)
+                try:
+                    # Десериализация сообщения из JSON в dict
+                    message_dict = json.loads(message)
+                    assert isinstance(message_dict, dict)
+                    logger.debug(f"Десериализованное сообщение: {message_dict}")
 
-                # Преобразуем dict в ImmutableDataChain
-                message_chain = ImmutableDataChain.from_dict(message_dict)
-
-                # Помещаем сообщение во входную очередь
-                self.queue_in.put(message_chain)
-
+                    # Вместо использования ImmutableDataChain просто помещаем dict в очередь
+                    self.queue_in.put(message_dict)
+                except Exception as e:
+                    logger.error(f"Ошибка при обработке сообщения: {e}")
+                    traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+                    logger.error(f"Трассировка исключения:\n{traceback_str}")
+                    # Отправляем сообщение об ошибке клиенту
+                    error_message = json.dumps({'error': str(e)})
+                    await websocket.send(error_message)
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Клиент отключился: {websocket.remote_address}")
+        except Exception as e:
+            logger.error(f"Неожиданная ошибка в обработчике: {e}")
+            traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+            logger.error(f"Трассировка исключения:\n{traceback_str}")
         finally:
             # Очищаем информацию о клиенте
             if self.websocket == websocket:
@@ -81,12 +97,12 @@ class WebSocketHandler:
         buffer = []  # Буфер для хранения сообщений, когда клиент не подключен
         while not self.stop_event.is_set():
             try:
-                # Получаем данные из выходной очереди (экземпляр специального класса)
+                # Получаем данные из выходной очереди (теперь просто dict)
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
                 logger.debug(f"Получен элемент из выходной очереди: {output_item}")
 
-                # Получаем сообщение для отправки, вызывая .get() на объекте
-                output_data = output_item.get()
+                # Получаем сообщение для отправки, сериализуя dict в JSON
+                output_data = json.dumps(output_item)
 
                 # Буферизуем сообщение
                 buffer.append(output_data)
@@ -111,4 +127,6 @@ class WebSocketHandler:
                         await asyncio.sleep(0.1)  # Небольшая пауза, чтобы избежать быстрого цикла
             except Exception as e:
                 logger.error(f"Ошибка при отправке данных клиенту: {e}")
+                traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+                logger.error(f"Трассировка исключения:\n{traceback_str}")
                 continue
