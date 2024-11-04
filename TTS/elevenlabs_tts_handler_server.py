@@ -54,7 +54,6 @@ class ElevenLabsTTSServerHandler(BaseHandler):
 
         try:
             audio = self.client.generate(
-                voice=tts_voice,
                 text=llm_sentence,
                 model=tts_model,
                 stream=True,
