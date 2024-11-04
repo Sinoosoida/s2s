@@ -123,7 +123,8 @@ class WebSocketHandler:
             try:
                 # Получаем данные из выходной очереди (теперь просто dict)
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
-
+                sent = output_item.get("llm_sentence")
+                logger.debug(f"sent {sent}")
                 if output_item.get("llm_sentence")==end_of_data:
                     logger.debug(f"Получен последний элемент")
                     buffer.append(end_of_data_bytes)
