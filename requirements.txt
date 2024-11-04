@@ -16,3 +16,4 @@ transliterate
 transformers
 elevenlabs
 websocket
+websocket-client

@@ -111,6 +111,7 @@ class FilteredQueue:
         self._user_phrase_id = phrase_id
 
     def put(self, item: ImmutableDataChain):
+        assert isinstance(item, ImmutableDataChain)
         """Puts the item in the queue if it passes the validation check."""
         with self._put_lock:
             if self._validate_item(item):
@@ -135,6 +136,7 @@ class FilteredQueue:
             self._queue.put(item)
 
     def _validate_item(self, item: ImmutableDataChain) -> bool:
+        assert isinstance(item, ImmutableDataChain)
         """Checks if the item has 'user_audio' matching the current user_phrase_id."""
         user_phrase_id = item.get_index('user_audio')
         if user_phrase_id is None:
