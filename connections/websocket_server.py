@@ -107,7 +107,7 @@ class WebSocketHandler:
                 # Получаем данные из выходной очереди
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
                 sent = output_item.get("llm_sentence")
-                logger.debug(f"sent {sent}")
+                # logger.debug(f"sent {sent}")
                 if output_item.get("llm_sentence") == end_of_data:
                     logger.debug(f"End of user's request processing")
                     buffer.append(end_of_data_bytes)
