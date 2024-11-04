@@ -8,16 +8,16 @@ from INTERRUPTION.interruption_manager_handler import InterruptionManagerHandler
 from LLM.openai_api_language_model_server import OpenApiModelServerHandler
 from TTS.elevenlabs_tts_handler_server import ElevenLabsTTSServerHandler
 from connections.websocket_server import WebSocketHandler
-
+import nltk
 # Ensure that the necessary NLTK resources are available
-# try:
-#     nltk.data.find("tokenizers/punkt_tab")
-# except (LookupError, OSError):
-#     nltk.download("punkt_tab")
-# try:
-#     nltk.data.find("tokenizers/averaged_perceptron_tagger_eng")
-# except (LookupError, OSError):
-#     nltk.download("averaged_perceptron_tagger_eng")
+try:
+    nltk.data.find("tokenizers/punkt_tab")
+except (LookupError, OSError):
+    nltk.download("punkt_tab")
+try:
+    nltk.data.find("tokenizers/averaged_perceptron_tagger_eng")
+except (LookupError, OSError):
+    nltk.download("averaged_perceptron_tagger_eng")
 
 
 def setup_logger(log_level):
