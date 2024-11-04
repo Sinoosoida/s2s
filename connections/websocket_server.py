@@ -6,7 +6,10 @@ from utils.data import ImmutableDataChain
 import traceback
 import asyncio
 import websockets
+import logging
 import json
+
+logger = logging.getLogger(__name__)  # Определяем логгер
 
 class WebSocketHandler:
     def __init__(self, stop_event, queue_in, queue_out, host='0.0.0.0', port=8765):
@@ -105,16 +108,17 @@ class WebSocketHandler:
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
                 sent = output_item.get("llm_sentence")
                 logger.debug(f"sent {sent}")
-                if sent == end_of_data:
+                if output_item.get("llm_sentence") == end_of_data:
                     logger.debug(f"Получен последний элемент")
-                    buffer.append(end_of_data_bytes.decode('utf-8'))  # Декодируем байты в строку
+                    buffer.append(end_of_data_bytes)
                 else:
                     assert isinstance(output_item, ImmutableDataChain)
                     llm_sentence = output_item.get("llm_sentence")
                     output_audio_chunk = output_item.get("output_audio_chunk").tolist()
                     logger.debug(f"Получен элемент из выходной очереди: {llm_sentence}")
-                    # Формируем JSON для отправки клиенту
-                    output_data = json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk": output_audio_chunk})
+                    # logger.debug(f"Получено аудио: {output_audio_chunk}")
+                    output_item = json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk": output_audio_chunk})
+                    output_data = json.dumps(output_item)
                     buffer.append(output_data)
 
                 # Пытаемся отправить сообщения, если клиент подключен
