@@ -20,9 +20,7 @@ import websockets
 import logging
 import json
 
-logger = logging.getLogger(__name__)
-
-end_of_data = "END_OF_DATA"  # Определяем специальное значение
+logger = logging.getLogger(__name__) # Определяем специальное значение
 
 class WebSocketHandler:
     def __init__(self, stop_event, queue_in, queue_out, host='0.0.0.0', port=8765):
@@ -125,13 +123,18 @@ class WebSocketHandler:
             try:
                 # Получаем данные из выходной очереди (теперь просто dict)
                 output_item = await self.loop.run_in_executor(None, self.queue_out.get)
-                logger.debug(f"Получен элемент из выходной очереди: {output_item}")
 
-                # Получаем сообщение для отправки, сериализуя dict в JSON
-                output_data = json.dumps(output_item)
-
-                # Буферизуем сообщение
-                buffer.append(output_data)
+                if output_item.get_data()==end_of_data:
+                    logger.debug(f"Получен последний элемент")
+                    buffer.append(end_of_data)
+                else:
+                    assert isinstance(output_item, ImmutableDataChain)
+                    llm_sentence = output_item.get("llm_sentence")
+                    output_audio_chunk = output_item.get("output_audio_chunk")
+                    logger.debug(f"Получен элемент из выходной очереди: {llm_sentence}")
+                    json.dumps({"llm_sentence": llm_sentence, "output_audio_chunk":output_audio_chunk})
+                    output_data = json.dumps(output_item)
+                    buffer.append(output_data)
 
                 # Пытаемся отправить сообщения, если клиент подключен
                 while buffer:

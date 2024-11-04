@@ -1,1 +1,1 @@
-end_of_data = "End"
+end_of_data = b"END_OF_DATA"
