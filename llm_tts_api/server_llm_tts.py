@@ -115,8 +115,8 @@ class LLMTTSAPI(BaseHandler):
             try:
                 response_data = json.loads(response)
                 # Если данные были сериализованы дважды, десериализуем еще раз
-                # if isinstance(response_data, str):
-                #     response_data = json.loads(response_data)
+                if isinstance(response_data, str):
+                    response_data = json.loads(response_data)
             except json.JSONDecodeError as e:
                 logger.error(f"Ошибка декодирования JSON: {e}")
                 logger.debug(f"debug {response==end_of_data_bytes}, {response == end_of_data}")
