@@ -38,12 +38,12 @@ class OpenApiModelServerHandler(BaseHandler):
         logger.info(f"Warming up {self.__class__.__name__}")
         start = time.time()
         response = self.client.chat.completions.create(
-            model=self.model_name,
+            model="gpt-4o-mini-2024-07-18",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant"},
                 {"role": "user", "content": "Hello"},
             ],
-            stream=self.stream
+            stream=False
         )
         end = time.time()
         logger.info(
