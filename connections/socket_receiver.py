@@ -38,27 +38,57 @@ class SocketReceiver:
             data += packet
         return data
 
+    # def run(self):
+    #     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #     self.socket.bind((self.host, self.port))
+    #     self.socket.listen(1)
+    #     # logger.info("Receiver waiting to be connected...")
+    #     self.conn, _ = self.socket.accept()
+    #     # logger.info("receiver connected")
+    #
+    #     if self.should_listen is not None:
+    #         self.should_listen.set()
+    #     while not self.stop_event.is_set():
+    #         audio_chunk = self.receive_full_chunk(self.conn, self.chunk_size)
+    #         if audio_chunk is None:
+    #             # connection closed
+    #             self.queue_out.put(b"END")
+    #             break
+    #         if self.should_listen is None:
+    #             self.queue_out.put(audio_chunk)
+    #         else:
+    #             if self.should_listen.is_set():
+    #                 self.queue_out.put(audio_chunk)
+    #     self.conn.close()
+    #     logger.info("Receiver closed")
     def run(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.host, self.port))
         self.socket.listen(1)
-        # logger.info("Receiver waiting to be connected...")
-        self.conn, _ = self.socket.accept()
-        # logger.info("receiver connected")
 
-        if self.should_listen is not None:
-            self.should_listen.set()
         while not self.stop_event.is_set():
-            audio_chunk = self.receive_full_chunk(self.conn, self.chunk_size)
-            if audio_chunk is None:
-                # connection closed
-                self.queue_out.put(b"END")
-                break
-            if self.should_listen is None:
-                self.queue_out.put(audio_chunk)
-            else:
-                if self.should_listen.is_set():
+            logger.info("Receiver waiting to be connected...")
+            self.conn, _ = self.socket.accept()
+            logger.info("Receiver connected")
+
+            if self.should_listen is not None:
+                self.should_listen.set()
+
+            while not self.stop_event.is_set():
+                audio_chunk = self.receive_full_chunk(self.conn, self.chunk_size)
+                if audio_chunk is None:
+                    # connection closed
+                    self.queue_out.put(b"END")
+                    break
+                if self.should_listen is None or self.should_listen.is_set():
                     self.queue_out.put(audio_chunk)
-        self.conn.close()
+
+            # Close connection to allow for reconnection
+            self.conn.close()
+            logger.info("Client disconnected, waiting for reconnection...")
+
+        # Clean up the socket when stopped
+        self.socket.close()
         logger.info("Receiver closed")
