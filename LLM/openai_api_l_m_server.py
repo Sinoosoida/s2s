@@ -63,10 +63,11 @@ class OpenApiModelServerHandler(BaseHandler):
 
         # Initialize ChromaDB collections
         self.client_chromadb = chromadb.Client()
-        try:
-            self.client_chromadb.delete_collection(name="product_embeddings_preprocessed")
-        except chromadb.errors.CollectionNotFoundError:
-            pass
+
+        # try:
+        #     self.client_chromadb.delete_collection(name="product_embeddings_preprocessed")
+        # except chromadb.errors.CollectionNotFoundError:
+        #     pass
 
         self.preprocessed_collection = self.client_chromadb.create_collection(name="product_embeddings_preprocessed")
         self.price_list_collection = self.client_chromadb.create_collection(name="product_embeddings_price_list")
