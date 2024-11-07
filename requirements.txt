@@ -17,3 +17,7 @@ transformers
 elevenlabs
 websocket
 websocket-client
+langgraph
+langchain_openai
+chromadb
+pyprojroot
