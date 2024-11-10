@@ -27,7 +27,8 @@ class LLMTTSAPI(BaseHandler):
             tts_voice="alloy",
             tts_model="eleven_turbo_v2_5",
             tts_optimize_streaming_latency=3,
-            tts_output_format="pcm_16000"
+            tts_output_format="pcm_16000",
+            gen_kwargs={},  # Not used
     ):
         self.llm_model_name = llm_model_name
         self.user_role = user_role
