@@ -313,7 +313,7 @@ def build_pipeline(
     #                       iterated=True)
 
     # deiterator = DeiteratorHandler(stop_event, audio_response_queue_of_iterators, send_audio_chunks_queue)
-    llm_tts_api = LLMTTSAPI(stop_event ,preprocessed_text_prompt_queue, send_audio_chunks_queue, threads=1, setup_args = llm_tts_api_handler_kwargs)
+    llm_tts_api = LLMTTSAPI(stop_event ,preprocessed_text_prompt_queue, send_audio_chunks_queue, threads=1, setup_kwargs = vars(llm_tts_api_handler_kwargs))
 
     interruption_manager = InterruptionManagerHandler(
         stop_event = stop_event,
