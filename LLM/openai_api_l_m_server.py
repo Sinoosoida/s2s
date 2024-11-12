@@ -47,7 +47,7 @@ class OpenApiModelServerHandler(BaseHandler):
             model_name=model_name,
             temperature=0.0
         )
-
+        print("DEBBBBBB: start INIT")
         # Load data for Q&A system
         self.preprocessed_data = pd.read_excel(here('data/for_upload/preprocessed_3mo_personal.xlsx'))
         self.price_list = pd.read_excel(here('data/for_upload/price_list_person.xlsx'))
@@ -63,7 +63,7 @@ class OpenApiModelServerHandler(BaseHandler):
 
         self.preprocessed_collection = client_chromadb.get_collection(name="product_embeddings_preprocessed")
         self.price_list_collection = client_chromadb.get_collection(name="product_embeddings_price_list")
-
+        print("DEBBBBBB: before agent's init")
         # Initialize tools and create ReAct agent for Q&A system
         self.tools = self.create_tools()
         self.qna_agent = create_react_agent(self.qna_model, tools=self.tools)
@@ -85,11 +85,14 @@ class OpenApiModelServerHandler(BaseHandler):
             10. Assist the user in adding selected products to the cart and calculating the total price.
             """
         }
-
+        print("DEBBBBBB: after agent's init before warmup")
         self.warmup()
 
     def warmup(self):
         logger.info(f"Warming up {self.__class__.__name__}")
+
+        print("DEBBBBBB: starting warmup")
+
         start = time.time()
         response = self.client.chat.completions.create(
             model="gpt-4o-mini-2024-07-18",
@@ -99,7 +102,9 @@ class OpenApiModelServerHandler(BaseHandler):
             ],
             stream=False
         )
+        print("DEBBBBBB: ending warmup")
         end = time.time()
+        
         logger.info(f"{self.__class__.__name__}: warmed up! time: {(end - start):.3f} s")
 
     def process(self, data: ImmutableDataChain):
