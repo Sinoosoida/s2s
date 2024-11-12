@@ -80,7 +80,11 @@ class OpenApiModelServerHandler(BaseHandler):
         self.system_prompt = {
             "role": "system",
             "content": """
-            You are an intelligent assistant helping users find information about products in a database.
+            You are an intelligent assistant helping users find information about products in a databases.
+            Never give the user raw results of tools or data in JSON format, give it to the user in a human-understandable format.
+            Never inform the user about internal errors (validation error for example when using a tool) or details of query processing.
+            If there is a situation of clarification, then clarify additional parameters from the user correctly, asking a full question.
+
             When a user provides a product-related query, follow these rules:
             1. After initially getting a user's query about a particular product, use the 'extract_parameters' tool to normalize the query.
             2. Perform a semantic search (RAG) first in the preprocessed data collection (`preprocessed_collection`).
@@ -153,21 +157,6 @@ class OpenApiModelServerHandler(BaseHandler):
         # Don't forget last sentence
         yield data.add_data(printable_text, "llm_sentence")
         yield data.add_data(end_of_data, "llm_sentence")
-
-    def load_embeddings(self):
-        for idx, row in self.preprocessed_data.iterrows():
-            row_data = row.to_dict()
-            text_representation = " ".join([str(value) for key, value in row_data.items() if pd.notna(value)])
-            embedding = self.get_embedding(text_representation)
-            normalized_embedding = self.normalize_embedding(embedding).tolist()
-            self.preprocessed_collection.add(embeddings=[normalized_embedding], documents=[json.dumps(row_data, ensure_ascii=False)], ids=[str(idx)])
-
-        for idx, row in self.price_list.iterrows():
-            row_data = row.to_dict()
-            text_representation = " ".join([str(value) for key, value in row_data.items() if pd.notna(value)])
-            embedding = self.get_embedding(text_representation)
-            normalized_embedding = self.normalize_embedding(embedding).tolist()
-            self.price_list_collection.add(embeddings=[normalized_embedding], documents=[json.dumps(row_data, ensure_ascii=False)], ids=[str(idx)])
 
     def get_embedding(self, text, model="text-embedding-3-large"):
         response = self.client.embeddings.create(input=[text], model=model)
