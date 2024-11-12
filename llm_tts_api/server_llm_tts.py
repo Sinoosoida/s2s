@@ -55,8 +55,7 @@ class LLMTTSAPI(BaseHandler):
         self.warmup()
 
     def warmup(self):
-        print("DEBBBBBB: starting warmup llm tts")
-
+        logger.info("DEBBBBBB: starting warmup llm tts")
         start = time.time()
         for _ in self.get_data(
                 llm_model_name=self.llm_model_name,
