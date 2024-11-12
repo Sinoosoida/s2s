@@ -30,6 +30,7 @@ from arguments_classes.vad_arguments import VADHandlerArguments
 from arguments_classes.whisper_stt_arguments import WhisperSTTHandlerArguments
 from arguments_classes.melo_tts_arguments import MeloTTSHandlerArguments
 from arguments_classes.open_api_language_model_arguments import OpenApiLanguageModelHandlerArguments
+from arguments_classes.server_api_arguments import ServerHandlerArguments
 import torch
 import nltk
 from rich.console import Console
@@ -92,7 +93,8 @@ def parse_arguments():
             ChatTTSHandlerArguments,
             MMSTTSHandlerArguments,
             OpenAITTSHandlerArguments,
-            ElevenLabsTTSHandlerArguments
+            ElevenLabsTTSHandlerArguments,
+            ServerHandlerArguments
         )
     )
 
@@ -181,7 +183,8 @@ def prepare_all_args(
         chat_tts_handler_kwargs,
         mms_tts_handler_kwargs,
         openai_tts_handler_kwargs,
-        elevenlabs_tts_handler_kwargs
+        elevenlabs_tts_handler_kwargs,
+        llm_tts_api_handler_kwargs
 ):
     prepare_module_args(
         module_kwargs,
@@ -196,7 +199,8 @@ def prepare_all_args(
         chat_tts_handler_kwargs,
         mms_tts_handler_kwargs,
         openai_tts_handler_kwargs,
-        elevenlabs_tts_handler_kwargs
+        elevenlabs_tts_handler_kwargs,
+        llm_tts_api_handler_kwargs
     )
 
     rename_args(whisper_stt_handler_kwargs, "stt")
@@ -211,6 +215,7 @@ def prepare_all_args(
     rename_args(mms_tts_handler_kwargs, "mms_tts")
     rename_args(openai_tts_handler_kwargs, "openai_tts")
     rename_args(elevenlabs_tts_handler_kwargs, "elevenlabs_tts")
+    rename_args(llm_tts_api_handler_kwargs, "server")
 
 
 def initialize_queues_and_events():
@@ -246,6 +251,7 @@ def build_pipeline(
         mms_tts_handler_kwargs,
         openai_tts_handler_kwargs,
         elevenlabs_tts_handler_kwargs,
+        llm_tts_api_handler_kwargs,
         queues_and_events,
 ):
     stop_event = queues_and_events["stop_event"]
@@ -307,7 +313,7 @@ def build_pipeline(
     #                       iterated=True)
 
     # deiterator = DeiteratorHandler(stop_event, audio_response_queue_of_iterators, send_audio_chunks_queue)
-    llm_tts_api = LLMTTSAPI(stop_event ,preprocessed_text_prompt_queue, send_audio_chunks_queue, threads=1, setup_args = ())
+    llm_tts_api = LLMTTSAPI(stop_event ,preprocessed_text_prompt_queue, send_audio_chunks_queue, threads=1, setup_kwargs = vars(llm_tts_api_handler_kwargs))
 
     interruption_manager = InterruptionManagerHandler(
         stop_event = stop_event,
@@ -378,7 +384,8 @@ def main():
         chat_tts_handler_kwargs,
         mms_tts_handler_kwargs,
         openai_tts_handler_kwargs,
-        elevenlabs_tts_handler_kwargs
+        elevenlabs_tts_handler_kwargs,
+        llm_tts_api_handler_kwargs
     ) = parse_arguments()
 
     setup_logger(module_kwargs.log_level)
@@ -396,7 +403,8 @@ def main():
         chat_tts_handler_kwargs,
         mms_tts_handler_kwargs,
         openai_tts_handler_kwargs,
-        elevenlabs_tts_handler_kwargs
+        elevenlabs_tts_handler_kwargs,
+        llm_tts_api_handler_kwargs
     )
 
     queues_and_events = initialize_queues_and_events()
@@ -418,6 +426,7 @@ def main():
         mms_tts_handler_kwargs,
         openai_tts_handler_kwargs,
         elevenlabs_tts_handler_kwargs,
+        llm_tts_api_handler_kwargs,
         queues_and_events
     )
 

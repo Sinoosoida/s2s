@@ -55,25 +55,14 @@ class OpenApiModelServerHandler(BaseHandler):
 
         # Ensure that column names are correct
         self.jargon_data.columns = ['Жаргонизмы', 'Слово_значение', 'Примечание']
-
-        # Create a jargon dictionary
         self.jargon_terms = dict(zip(self.jargon_data['Жаргонизмы'], self.jargon_data['Слово_значение']))
-
         self.jargon_text = "\n".join([f"- {term}: {definition}" for term, definition in self.jargon_terms.items()])
 
-        # Initialize ChromaDB collections
-        self.client_chromadb = chromadb.Client()
+        chroma_db_path = here('data/chroma_collections')
+        client_chromadb = chromadb.PersistentClient(path=str(chroma_db_path))
 
-        # try:
-        #     self.client_chromadb.delete_collection(name="product_embeddings_preprocessed")
-        # except chromadb.errors.CollectionNotFoundError:
-        #     pass
-
-        self.preprocessed_collection = self.client_chromadb.create_collection(name="product_embeddings_preprocessed")
-        self.price_list_collection = self.client_chromadb.create_collection(name="product_embeddings_price_list")
-        
-        # Load embeddings for Q&A
-        self.load_embeddings()
+        self.preprocessed_collection = client_chromadb.get_collection(name="product_embeddings_preprocessed")
+        self.price_list_collection = client_chromadb.get_collection(name="product_embeddings_price_list")
 
         # Initialize tools and create ReAct agent for Q&A system
         self.tools = self.create_tools()
@@ -106,7 +95,7 @@ class OpenApiModelServerHandler(BaseHandler):
             model="gpt-4o-mini-2024-07-18",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant"},
-                {"role": "user", "content": "Hello"},
+                {"role": "user", "content": "Hello  "},
             ],
             stream=False
         )
