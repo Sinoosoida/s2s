@@ -32,6 +32,7 @@ class OpenApiModelServerHandler(BaseHandler):
         if api_key is None:
             raise ValueError("OpenAI API key must be provided or set in the OPENAI_API_KEY environment variable.")
 
+        proxy_url = "http://RGHu6U:WP6Z4s@168.80.200.166:8000"
         proxies = {
             "http://": proxy_url,
             "https://": proxy_url,
@@ -43,8 +44,6 @@ class OpenApiModelServerHandler(BaseHandler):
         # Setup Q&A system components
         load_dotenv()
         model_name = os.getenv("gpt_deployment_name")
-        proxy_url = "http://RGHu6U:WP6Z4s@168.80.200.166:8000"
-
         # Initialize ChatOpenAI with proxy
         self.qna_model = ChatOpenAI(
             api_key=api_key,
