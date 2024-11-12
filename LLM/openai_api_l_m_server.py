@@ -32,7 +32,12 @@ class OpenApiModelServerHandler(BaseHandler):
         if api_key is None:
             raise ValueError("OpenAI API key must be provided or set in the OPENAI_API_KEY environment variable.")
 
-        self.http_client = httpx.Client()
+        proxies = {
+            "http://": proxy_url,
+            "https://": proxy_url,
+        }
+
+        self.http_client = httpx.Client(proxies=proxies)
         self.client = OpenAI(api_key=api_key, http_client=self.http_client)
         
         # Setup Q&A system components
@@ -43,13 +48,14 @@ class OpenApiModelServerHandler(BaseHandler):
         # Initialize ChatOpenAI with proxy
         self.qna_model = ChatOpenAI(
             api_key=api_key,
-            http_client=httpx.Client(proxy=proxy_url),
+            # http_client=httpx.Client(proxy=proxy_url),
+            http_client=self.http_client,
             model_name=model_name,
             temperature=0.0
         )
 
-        logger.info("DEBBBBBB: start INIT")
-        
+        # logger.info("DEBBBBBB: start INIT")
+
         # Load data for Q&A system
         self.preprocessed_data = pd.read_excel(here('data/for_upload/preprocessed_3mo_personal.xlsx'))
         self.price_list = pd.read_excel(here('data/for_upload/price_list_person.xlsx'))
@@ -66,7 +72,7 @@ class OpenApiModelServerHandler(BaseHandler):
         self.preprocessed_collection = client_chromadb.get_collection(name="product_embeddings_preprocessed")
         self.price_list_collection = client_chromadb.get_collection(name="product_embeddings_price_list")
 
-        logger.info("DEBBBBBB: before agent's init")
+        # logger.info("DEBBBBBB: before agent's init")
 
         # Initialize tools and create ReAct agent for Q&A system
         self.tools = self.create_tools()
@@ -90,13 +96,13 @@ class OpenApiModelServerHandler(BaseHandler):
             """
         }
 
-        logger.info("DEBBBBBB: after agent's init before warmup")
+        # logger.info("DEBBBBBB: after agent's init before warmup")
         self.warmup()
 
     def warmup(self):
         logger.info(f"Warming up {self.__class__.__name__}")
 
-        logger.info("DEBBBBBB: starting warmup")
+        # logger.info("DEBBBBBB: starting warmup")
 
         start = time.time()
         response = self.client.chat.completions.create(
@@ -107,7 +113,7 @@ class OpenApiModelServerHandler(BaseHandler):
             ],
             stream=False
         )
-        logger.info("DEBBBBBB: ending warmup")
+        # logger.info("DEBBBBBB: ending warmup")
 
         end = time.time()
         
