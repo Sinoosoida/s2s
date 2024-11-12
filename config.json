@@ -29,7 +29,7 @@
 
     "filler_activated": false,
 
-    "server_llm_model_name":"gpt-4o-mini-2024-07-18",
+    "server_llm_model_name":"gpt-4o",
     "server_user_role":"user",
     "server_chat_size":10,
     "server_init_chat_role":"system",
