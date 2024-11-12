@@ -32,13 +32,13 @@ class OpenApiModelServerHandler(BaseHandler):
         if api_key is None:
             raise ValueError("OpenAI API key must be provided or set in the OPENAI_API_KEY environment variable.")
 
-        proxy_url = "http://RGHu6U:WP6Z4s@168.80.200.166:8000"
-        proxies = {
-            "http://": proxy_url,
-            "https://": proxy_url,
-        }
+        # proxy_url = "http://RGHu6U:WP6Z4s@168.80.200.166:8000"
+        # proxies = {
+        #     "http://": proxy_url,
+        #     "https://": proxy_url,
+        # }
 
-        self.http_client = httpx.Client(proxies=proxies)
+        self.http_client = httpx.Client()
         self.client = OpenAI(api_key=api_key, http_client=self.http_client)
         
         # Setup Q&A system components
