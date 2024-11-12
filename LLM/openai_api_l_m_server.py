@@ -186,6 +186,12 @@ class OpenApiModelServerHandler(BaseHandler):
         def extract_parameters(user_query: str, jargon_text: str) -> dict:
             """
             Extract parameters from the user query using an LLM.
+            Args:
+                user_query (str): The query provided by the user.
+                jargon_text (str): A list of jargon terms to help extract parameters.
+                chain: The LLM chain used for extracting parameters.
+            Returns:
+                dict: A dictionary containing the extracted parameters.
             """
             prompt_template = PromptTemplate(
                 input_variables=['user_input', 'jargon_text'],
@@ -209,9 +215,54 @@ class OpenApiModelServerHandler(BaseHandler):
 - Проанализируй пользовательский запрос и извлеки значения указанных выше параметров.
 - Если параметр не упомянут в запросе, установи его значение как null.
 - Обязательно учитывай жаргонизмы при анализе.
+- Параметр "Животное" отвечает за то, из чего сделана продукция, не путай с "Объект".
+- Параметр "Объект" отвечает за наименование продукции, не путай с "Животное".
+- Параметр "Количество" отвечает за число грамм или килограмм в одной единице продукции.
+- Выведи результат в формате корректного JSON, используя названия параметров в качестве ключей и извлеченные значения в качестве значений.
+- В выводе результата не используй никаких дополнительных маркеров, таких как ```json```
 
 Жаргонизмы и их определения: 
 {jargon_text}
+
+**Примеры:**
+
+Пользовательский запрос: "Почём у вас охлажденная вакуумная тушка бройлера?"
+Извлеченные параметры:
+"Цена": null,
+"Животное": "Курица",
+"Объект": "Тушка ЦБ",
+"Дополнительная информация": null,
+"Количество": null,
+"Желаемое число единиц выбранного объекта": null,
+"Способ упаковки": "В/У",
+"Термическое состояние": "охл",
+"Производитель": null
+
+Пользовательский запрос: "Хочу пару коробов филейки свиной"
+Извлеченные параметры:
+"Цена": null,
+"Животное": "Свинья",
+"Объект": "Вырезка свиная",
+"Дополнительная информация": null,
+"Количество": null,
+"Желаемое число единиц выбранного объекта": "2",
+"Способ упаковки": "пак",
+"Термическое состояние": null,
+"Производитель": null
+
+Пользовательский запрос: "Какая у вас печень замороженная есть от КПД?"
+Извлеченные параметры:
+"Цена": null,
+"Животное": "null",
+"Объект": "Печень",
+"Дополнительная информация": null,
+"Количество": "null",
+"Желаемое число единиц выбранного объекта": null,
+"Способ упаковки": null,
+"Термическое состояние": "зам",
+"Производитель": "КПД"
+
+**Теперь обработай следующий пользовательский запрос:**
 
 Пользовательский запрос: "{user_input}"
 Извлеченные параметры:
@@ -224,12 +275,29 @@ class OpenApiModelServerHandler(BaseHandler):
                 "jargon_text": jargon_text
             })
             response_content = response['content'] if isinstance(response, dict) else response.content
-            return json.loads(response_content)
+
+            # Parse the result
+            try:
+                norm_input = json.loads(response_content)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON response: " + response_content)
+            
+            cleaned_output = {key: (None if value is None or value == 'null' else value) for key, value in norm_input.items()}
+
+            cleaned_output_str = json.dumps(cleaned_output, ensure_ascii=False)
+
+            return cleaned_output
 
         @tool
         def rag_search_products(params: dict, threshold: float = 1.04, collection_name: str = "preprocessed") -> dict:
             """
             Use semantic search (RAG) to find the most relevant products based on the given parameters.
+            Args:
+                params (dict): Parameters extracted from the user's query (e.g., Животное, Объект, Термическое состояние).
+                threshold (float): The threshold for semantic similarity score (default: 1.1).
+                collection_name (str): Name of the collection to search in ("preprocessed" or "price_list").
+            Returns:
+                dict: A dictionary containing the matching products and the count of matches.
             """
             if not params:
                 raise ValueError("Parameters are missing for the RAG search.")
@@ -241,8 +309,8 @@ class OpenApiModelServerHandler(BaseHandler):
             if not non_null_params:
                 raise ValueError("No valid parameters provided for the RAG search.")
 
-            query_string = " ".join(non_null_params.values())
-            query_embedding = self.get_embedding(query_string)
+            json_params = json.dumps(params, ensure_ascii=False)
+            query_embedding = self.get_embedding(json_params)
             normalized_query_embedding = self.normalize_embedding(query_embedding).tolist()
 
             collection = self.preprocessed_collection if collection_name == "preprocessed" else self.price_list_collection
@@ -257,6 +325,11 @@ class OpenApiModelServerHandler(BaseHandler):
         def merge_params(original_params: dict, new_params: dict) -> dict:
             """
             Merge the original parameters with new parameters.
+            Args:
+                original_params (dict): The original parameters from the initial query.
+                new_params (dict): The new parameters obtained after user clarification.
+            Returns:
+                dict: Merged parameters with updated values.
             """
             merged_params = original_params.copy()
             merged_params.update({k: v for k, v in new_params.items() if v is not None})
@@ -266,6 +339,10 @@ class OpenApiModelServerHandler(BaseHandler):
         def get_prices(codes: list) -> dict:
             """
             Get prices for the given product codes from the price list.
+            Args:
+                codes (list): List of product codes.
+            Returns:
+                dict: A dictionary with product codes as keys and their prices as values.
             """
             if not codes:
                 raise ValueError("No product codes provided.")
@@ -280,6 +357,10 @@ class OpenApiModelServerHandler(BaseHandler):
         def calculate_total_price(cart: list) -> float:
             """
             Calculate the total price for the products in the cart.
+            Args:
+                cart (list): List of products in the cart.
+            Returns:
+                float: The total price for the products.
             """
             total_price = 0.0
 
@@ -297,13 +378,17 @@ class OpenApiModelServerHandler(BaseHandler):
         def add_to_cart(products: list, cart: list) -> list:
             """
             Add selected products to the cart.
+            Args:
+                products (list): List of selected products with their codes and quantities.
+                cart (list): The current cart to add products to.
+            Returns:
+                list: The updated cart.
             """
             updated_cart = cart.copy()
 
             for product in products:
-                code = product.get('НоменклатураКод')
-                quantity = product.get('Количество', 1)
-
+                code = product.get('НоменклатураКод') or product.get('code')
+                quantity = product.get('Количество', product.get('quantity', 1))
                 existing_item = next((item for item in updated_cart if item['НоменклатураКод'] == code), None)
                 if existing_item:
                     existing_item['Количество'] += quantity
